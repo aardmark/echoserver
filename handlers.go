@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -30,4 +31,19 @@ func login(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"token": t,
 	})
+}
+
+func accessible(c echo.Context) error {
+	return c.String(http.StatusOK, "Accessible")
+}
+
+func restricted(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	email := claims["email"].(string)
+	exp := claims["exp"].(float64)
+	admin := claims["admin"].(bool)
+	ret := fmt.Sprintf("%v %v %v", email, exp, admin)
+
+	return c.String(200, ret)
 }
