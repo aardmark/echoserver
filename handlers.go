@@ -9,17 +9,12 @@ import (
 	"github.com/labstack/echo"
 )
 
-func login(c echo.Context) error {
-	email := c.FormValue("email")
-	password := c.FormValue("password")
-	if email == "" || password == "" {
-		return echo.ErrUnauthorized
-	}
+func authorize(c echo.Context) error {
 	token := jwt.New(jwt.SigningMethodHS256)
-
+	fmt.Println(c.Get("user"))
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["email"] = email
+	claims["email"] = "gottogetemail"
 	claims["admin"] = true
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
