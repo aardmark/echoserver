@@ -10,24 +10,12 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-var jwtConfig = middleware.JWTConfig{
-	Skipper: func(c echo.Context) bool {
-		return c.Path() == "/authorize" || c.Path() == "/users"
-	},
-	SigningKey: []byte("secret"),
-}
-
-var basicAuthConfig = middleware.BasicAuthConfig{
-	Skipper: func(c echo.Context) bool {
-		return c.Path() != "/authorize"
-	},
-	Validator: func(username, password string, c echo.Context) (bool, error) {
-		if username == "fred" && password == "flintstone" {
-			c.Set("user", username)
-			return true, nil
-		}
-		return false, nil
-	},
+func basicAuthenticator(username, password string, c echo.Context) (bool, error) {
+	if username == "fred" && password == "flintstone" {
+		c.Set("user", username)
+		return true, nil
+	}
+	return false, nil
 }
 
 var trailingSlashConfig = middleware.TrailingSlashConfig{
@@ -42,11 +30,11 @@ func main() {
 	e.Use(db.DataStoreMiddleware())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.JWTWithConfig(jwtConfig))
-	e.Use(middleware.BasicAuthWithConfig(basicAuthConfig))
+	// e.Use(middleware.JWTWithConfig(jwtConfig))
+	// e.Use(middleware.BasicAuthWithConfig(basicAuthConfig))
 
-	e.GET("/authorize", authorize)
-	e.GET("/accounts", restricted)
-	e.GET("/users", users.Get)
+	e.GET("/authorize", authorize, middleware.BasicAuth(basicAuthenticator))
+	e.GET("/accounts", restricted, middleware.JWT([]byte("secret")))
+	e.GET("/users", users.Get, middleware.JWT([]byte("secret")))
 	e.Logger.Fatal(e.Start(":8080"))
 }
