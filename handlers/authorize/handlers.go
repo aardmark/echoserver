@@ -1,25 +1,26 @@
 package authorize
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/aardmark/echoserver/model"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
 // Get authorizes the client and returns a JWT
 func Get(c echo.Context) error {
+	user := c.Get("authenticated_user").(*model.User)
+
 	token := jwt.New(jwt.SigningMethodHS256)
-	c.Logger().Debug(c.Get("user"))
-	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["email"] = "gottogetemail"
-	claims["admin"] = true
+	claims["firstname"] = user.FirstName
+	claims["lastname"] = user.LastName
+	claims["email"] = user.Email
+	claims["admin"] = user.IsAdmin
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		return err

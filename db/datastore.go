@@ -3,7 +3,11 @@ package db
 import (
 	"github.com/aardmark/echoserver/model"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
+
+// ErrNotFound indicates no documents were returned
+var ErrNotFound = mgo.ErrNotFound
 
 // DataStore abstracts the database
 type DataStore struct {
@@ -30,27 +34,26 @@ func (ds *DataStore) Close() {
 	ds.session.Close()
 }
 
-// DataStoreMiddleware creates middleware to attach a new connection
-// to the request
-// func DataStoreMiddleware() echo.MiddlewareFunc {
-// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-// 		return func(c echo.Context) error {
-// 			ds := NewDataStore()
-// 			defer func() {
-// 				ds.session.Close()
-// 			}()
-// 			c.Set("ds", ds)
-// 			return next(c)
-// 		}
-// 	}
-// }
-
 // GetUsers gets all the users
-func (ds *DataStore) GetUsers() ([]model.User, error) {
+func (ds *DataStore) GetUsers() (*[]model.User, error) {
 	collection := ds.session.DB("invoicer").C("users")
 
 	var results []model.User
 	err := collection.Find(nil).All(&results)
+	return &results, err
+}
 
-	return results, err
+// GetUserByEmail gets a user by email address
+func (ds *DataStore) GetUserByEmail(email string) (*model.User, error) {
+	collection := ds.session.DB("invoicer").C("users")
+
+	var results model.User
+	err := collection.Find(bson.M{"email": email}).One(&results)
+	return &results, err
+}
+
+// CreateUser created a new user
+func (ds *DataStore) CreateUser(user *model.User) error {
+	err := ds.session.DB("invoicer").C("users").Insert(user)
+	return err
 }
