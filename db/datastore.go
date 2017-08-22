@@ -2,7 +2,6 @@ package db
 
 import (
 	"github.com/aardmark/echoserver/model"
-	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2"
 )
 
@@ -26,24 +25,28 @@ func init() {
 	masterStore = &DataStore{session}
 }
 
+// Close closes the session
+func (ds *DataStore) Close() {
+	ds.session.Close()
+}
+
 // DataStoreMiddleware creates middleware to attach a new connection
 // to the request
-func DataStoreMiddleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			ds := NewDataStore()
-			defer func() {
-				ds.session.Close()
-			}()
-			c.Set("ds", ds)
-			return next(c)
-		}
-	}
-}
+// func DataStoreMiddleware() echo.MiddlewareFunc {
+// 	return func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(c echo.Context) error {
+// 			ds := NewDataStore()
+// 			defer func() {
+// 				ds.session.Close()
+// 			}()
+// 			c.Set("ds", ds)
+// 			return next(c)
+// 		}
+// 	}
+// }
 
 // GetUsers gets all the users
 func (ds *DataStore) GetUsers() ([]model.User, error) {
-	defer ds.session.Close()
 	collection := ds.session.DB("invoicer").C("users")
 
 	var results []model.User
