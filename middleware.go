@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	validator "gopkg.in/go-playground/validator.v9"
+
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/aardmark/echoserver/db"
@@ -13,6 +15,14 @@ import (
 
 var trailingSlashConfig = middleware.TrailingSlashConfig{
 	RedirectCode: http.StatusMovedPermanently,
+}
+
+type customValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *customValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
 }
 
 func checkPasswordHash(password, hash string) bool {

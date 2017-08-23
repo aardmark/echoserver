@@ -9,14 +9,6 @@ import (
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
-type customValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *customValidator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
-}
-
 func main() {
 	e := echo.New()
 	e.Validator = &customValidator{validator: validator.New()}
@@ -26,6 +18,7 @@ func main() {
 	e.Use(DataStoreMiddleware())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	e.GET("/authorize", authorize.Get, middleware.BasicAuth(basicAuthenticator))
 	e.GET("/users", users.Get, middleware.JWT([]byte("secret")))
