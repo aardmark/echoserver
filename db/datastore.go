@@ -1,9 +1,7 @@
 package db
 
 import (
-	"github.com/aardmark/echoserver/model"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // ErrNotFound indicates no documents were returned
@@ -32,28 +30,4 @@ func init() {
 // Close closes the session
 func (ds *DataStore) Close() {
 	ds.session.Close()
-}
-
-// GetUsers gets all the users
-func (ds *DataStore) GetUsers() (*[]model.User, error) {
-	collection := ds.session.DB("invoicer").C("users")
-
-	var results []model.User
-	err := collection.Find(nil).All(&results)
-	return &results, err
-}
-
-// GetUserByEmail gets a user by email address
-func (ds *DataStore) GetUserByEmail(email string) (*model.User, error) {
-	collection := ds.session.DB("invoicer").C("users")
-
-	var results model.User
-	err := collection.Find(bson.M{"email": email}).One(&results)
-	return &results, err
-}
-
-// CreateUser created a new user
-func (ds *DataStore) CreateUser(user *model.User) error {
-	err := ds.session.DB("invoicer").C("users").Insert(user)
-	return err
 }

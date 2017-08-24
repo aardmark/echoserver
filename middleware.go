@@ -45,7 +45,7 @@ func DataStoreMiddleware() echo.MiddlewareFunc {
 
 func basicAuthenticator(email, password string, c echo.Context) (bool, error) {
 	ds := c.Get("ds").(*db.DataStore)
-	user, err := ds.GetUserByEmail(email)
+	pwd, err := ds.GetUserPassword(email)
 	if err != nil {
 		if err == db.ErrNotFound {
 			return false, nil
@@ -53,9 +53,14 @@ func basicAuthenticator(email, password string, c echo.Context) (bool, error) {
 		c.Logger().Error(err)
 		return false, err
 	}
-	if checkPasswordHash(password, user.Password) {
-		c.Set("authenticated_user", user)
-		return true, nil
+	if !checkPasswordHash(password, pwd) {
+		return false, nil
 	}
-	return false, nil
+	user, err := ds.GetUserByEmail(email)
+	if err != nil {
+		c.Logger().Error(err)
+		return false, err
+	}
+	c.Set("authenticated_user", user)
+	return true, nil
 }

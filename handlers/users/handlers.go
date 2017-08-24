@@ -42,7 +42,8 @@ func restricted(c echo.Context) error {
 
 // Post creates a new user
 func Post(c echo.Context) error {
-	user := &model.User{ID: bson.NewObjectId()}
+	// user := &model.User{ID: bson.NewObjectId()}
+	user := &model.UserWithCredentials{User: &model.User{ID: bson.NewObjectId()}, Password: ""}
 
 	err := c.Bind(user)
 	if err != nil {
@@ -65,5 +66,5 @@ func Post(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, user)
+	return c.JSON(http.StatusCreated, user.User)
 }

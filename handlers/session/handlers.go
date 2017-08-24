@@ -1,4 +1,4 @@
-package authorize
+package session
 
 import (
 	"net/http"

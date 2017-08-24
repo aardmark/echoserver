@@ -9,5 +9,10 @@ type User struct {
 	LastName  string        `bson:"lastname" json:"lastname" validate:"required"`
 	Email     string        `bson:"email" json:"email" validate:"required,email"`
 	IsAdmin   bool          `bson:"isAdmin" json:"isAdmin"`
-	Password  string        `bson:"password" json:"password" validate:"required"`
+}
+
+// UserWithCredentials includes the password
+type UserWithCredentials struct {
+	*User
+	Password string `bson:"password" json:"password" validate:"required"`
 }
