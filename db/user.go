@@ -42,7 +42,11 @@ func (ds *DataStore) SetUserPassword(email, password string) error {
 }
 
 // CreateUser created a new user
-func (ds *DataStore) CreateUser(user *model.UserWithCredentials) error {
-	err := ds.session.DB("invoicer").C("users").Insert(user)
+func (ds *DataStore) CreateUser(user *model.User, password string) error {
+	userWithPassword := struct {
+		model.User `bson:",inline"`
+		Password   string `bson:"password"`
+	}{*user, password}
+	err := ds.session.DB("invoicer").C("users").Insert(userWithPassword)
 	return err
 }

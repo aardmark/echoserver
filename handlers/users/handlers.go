@@ -1,6 +1,8 @@
 package users
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"gopkg.in/mgo.v2/bson"
@@ -27,44 +29,54 @@ func Get(c echo.Context) error {
 	return c.JSON(200, result)
 }
 
-/*
-func restricted(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	email := claims["email"].(string)
-	exp := claims["exp"].(float64)
-	admin := claims["admin"].(bool)
-	ret := fmt.Sprintf("%v %v %v", email, exp, admin)
-
-	return c.String(200, ret)
-}
-*/
-
 // Post creates a new user
 func Post(c echo.Context) error {
-	// user := &model.User{ID: bson.NewObjectId()}
-	user := &model.UserWithCredentials{User: &model.User{ID: bson.NewObjectId()}, Password: ""}
-
-	err := c.Bind(user)
+	bodyJSON, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
 	}
+
+	var bodyMap map[string]*json.RawMessage
+	err = json.Unmarshal(bodyJSON, &bodyMap)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
+	}
+
+	user := &model.User{ID: bson.NewObjectId()}
+	err = json.Unmarshal(bodyJSON, user)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
+	}
+
+	var password string
+	err = json.Unmarshal(*bodyMap["password"], &password)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
+	}
+	if password == "" {
+		c.Logger().Error("Password is required")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
+	}
+
 	err = c.Validate(user)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
 	}
 
-	user.Password, err = hashPassword(user.Password)
+	password, err = hashPassword(password)
 	if err != nil {
 		return err
 	}
 
 	ds := c.Get("ds").(*db.DataStore)
-	if err = ds.CreateUser(user); err != nil {
+	if err = ds.CreateUser(user, password); err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, user.User)
+	return c.JSON(http.StatusCreated, user)
 }
