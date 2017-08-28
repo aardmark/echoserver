@@ -18,6 +18,8 @@ func NewDataStore() *DataStore {
 }
 
 var masterStore *DataStore
+// DBName specifies the database name
+var DBName string
 
 func init() {
 	session, err := mgo.Dial("localhost")
@@ -25,6 +27,7 @@ func init() {
 		panic(err)
 	}
 	masterStore = &DataStore{session}
+	DBName = "invoicer"
 }
 
 // Close closes the session

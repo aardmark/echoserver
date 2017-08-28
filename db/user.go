@@ -7,7 +7,7 @@ import (
 
 // GetUsers gets all the users
 func (ds *DataStore) GetUsers() (*[]model.User, error) {
-	collection := ds.session.DB("invoicer").C("users")
+	collection := ds.session.DB(DBName).C("users")
 
 	var results []model.User
 	err := collection.Find(nil).All(&results)
@@ -16,7 +16,7 @@ func (ds *DataStore) GetUsers() (*[]model.User, error) {
 
 // GetUserByEmail gets a user by email address
 func (ds *DataStore) GetUserByEmail(email string) (*model.User, error) {
-	collection := ds.session.DB("invoicer").C("users")
+	collection := ds.session.DB(DBName).C("users")
 
 	var result model.User
 	err := collection.Find(bson.M{"email": email}).One(&result)
@@ -25,7 +25,7 @@ func (ds *DataStore) GetUserByEmail(email string) (*model.User, error) {
 
 // GetUserPassword gets a user's password
 func (ds *DataStore) GetUserPassword(email string) (string, error) {
-	collection := ds.session.DB("invoicer").C("users")
+	collection := ds.session.DB(DBName).C("users")
 	var result struct {
 		Password string `bson:"password"`
 	}
@@ -36,17 +36,13 @@ func (ds *DataStore) GetUserPassword(email string) (string, error) {
 // SetUserPassword sets a user's password
 // encryption/hashing should already be done at this point
 func (ds *DataStore) SetUserPassword(email, password string) error {
-	collection := ds.session.DB("invoicer").C("users")
+	collection := ds.session.DB(DBName).C("users")
 	err := collection.Update(bson.M{"email": email}, bson.M{"$set": bson.M{"password": password}})
 	return err
 }
 
-// CreateUser created a new user
-func (ds *DataStore) CreateUser(user *model.User, password string) error {
-	userWithPassword := struct {
-		model.User `bson:",inline"`
-		Password   string `bson:"password"`
-	}{*user, password}
-	err := ds.session.DB("invoicer").C("users").Insert(userWithPassword)
+// CreateUser creates a new user
+func (ds *DataStore) CreateUser(user *model.UserWithPassword) error {
+	err := ds.session.DB(DBName).C("users").Insert(user)
 	return err
 }

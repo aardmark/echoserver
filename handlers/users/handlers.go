@@ -1,8 +1,6 @@
 package users
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"gopkg.in/mgo.v2/bson"
@@ -31,52 +29,27 @@ func Get(c echo.Context) error {
 
 // Post creates a new user
 func Post(c echo.Context) error {
-	bodyJSON, err := ioutil.ReadAll(c.Request().Body)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
-	}
-
-	var bodyMap map[string]*json.RawMessage
-	err = json.Unmarshal(bodyJSON, &bodyMap)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
-	}
-
+	var err error
 	user := &model.User{ID: bson.NewObjectId()}
-	err = json.Unmarshal(bodyJSON, user)
-	if err != nil {
+	uwp := &model.UserWithPassword{User: *user, Password: ""}
+
+	if err = c.Bind(uwp); err != nil {
+		return err
+	}
+
+	if err = c.Validate(uwp); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
 	}
 
-	var password string
-	err = json.Unmarshal(*bodyMap["password"], &password)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
-	}
-	if password == "" {
-		c.Logger().Error("Password is required")
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
-	}
-
-	err = c.Validate(user)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad request")
-	}
-
-	password, err = hashPassword(password)
-	if err != nil {
+	if uwp.Password, err = hashPassword(uwp.Password); err != nil {
 		return err
 	}
 
 	ds := c.Get("ds").(*db.DataStore)
-	if err = ds.CreateUser(user, password); err != nil {
+	if err := ds.CreateUser(uwp); err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, user)
+	return c.JSON(http.StatusCreated, uwp.User)
 }

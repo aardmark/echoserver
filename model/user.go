@@ -10,3 +10,9 @@ type User struct {
 	Email     string        `bson:"email" json:"email" validate:"required,email"`
 	IsAdmin   bool          `bson:"isAdmin" json:"isAdmin"`
 }
+
+// UserWithPassword is the user with the password included
+type UserWithPassword struct {
+	User `bson:",inline"`
+	Password   string `bson:"password" validate:"required"`
+}
