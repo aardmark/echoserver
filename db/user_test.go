@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 
 func TestGetUserByEmail(t *testing.T) {
 	ds := NewDataStore()
-	f, err := ds.GetUserByEmail("fred@bedrock.gov")
+	f, err := ds.GetUserByEmail(fred.Email)
 	if err != nil {
 		t.Error(err)
 		return
@@ -44,7 +44,47 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
-func TestSetUserPassword(t *testing.T) {
+func TestDeleteUser(t *testing.T) {
+	ds := NewDataStore()
+	uwp := getUser("delme@bar.org")
+	if err := ds.CreateUser(uwp); err != nil {
+		t.Error(err)
+		return
+	}
+	err := ds.DeleteUser("delme@bar.org")
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestUpdateUser(t *testing.T) {
+	ds := NewDataStore()
+	uwp := getUser("update@bar.org")
+	if err := ds.CreateUser(uwp); err != nil {
+		t.Error(err)
+		return
+	}
+	user := uwp.User
+	user.Email = "updated@bar.org"
+	user.FirstName = "x"
+	user.LastName = "x"
+	user.IsAdmin = true
+	err := ds.UpdateUser(&user)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	u, err := ds.GetUserByEmail("updated@bar.org")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if u.FirstName != "x" || u.LastName != "x" || u.IsAdmin != true {
+		t.Error("didn't change")
+	}
+}
+
+func TestSetAndGetUserPassword(t *testing.T) {
 	ds := NewDataStore()
 	user := getUser("sdf@doo.com")
 	ds.CreateUser(user)
@@ -63,6 +103,27 @@ func TestSetUserPassword(t *testing.T) {
 	}
 }
 
+func TestGetUsers(t *testing.T) {
+	ds := NewDataStore()
+	user := getUser("1@doo.com")
+	ds.CreateUser(user)
+	user = getUser("2@doo.com")
+	ds.CreateUser(user)
+	users, err := ds.GetUsers()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	found := 0
+	for _, user := range *users {
+		if user.Email == "1@doo.com" || user.Email == "2@doo.com" {
+			found++
+		}
+	}
+	if found != 2 {
+		t.Error("couldn't find 'em - found ", found)
+	}
+}
 
 // setup stuff and helpers
 

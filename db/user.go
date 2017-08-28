@@ -33,6 +33,20 @@ func (ds *DataStore) GetUserPassword(email string) (string, error) {
 	return result.Password, err
 }
 
+// DeleteUser deletes a user
+func (ds *DataStore) DeleteUser(email string) error {
+	collection := ds.session.DB(DBName).C("users")
+	err := collection.Remove(bson.M{"email": email})
+	return err
+}
+
+// UpdateUser deletes a user
+func (ds *DataStore) UpdateUser(user *model.User) error {
+	collection := ds.session.DB(DBName).C("users")
+	err := collection.Update(bson.M{"_id": user.ID}, user)
+	return err
+}
+
 // SetUserPassword sets a user's password
 // encryption/hashing should already be done at this point
 func (ds *DataStore) SetUserPassword(email, password string) error {
